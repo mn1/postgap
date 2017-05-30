@@ -96,7 +96,9 @@ def main():
 	expanded_efo_iris = efo_iris + concatenate(map(postgap.EFO.children, efo_iris))
 
 	if len(options.diseases) > 0 or len(expanded_efo_iris) > 0:
+		logger.info("Starting diseases_to_genes")
 		res = postgap.Integration.diseases_to_genes(options.diseases, expanded_efo_iris, "CEPH", options.tissues)
+		logger.info("Done with diseases_to_genes")
 	elif options.rsID is not None:
 		res = postgap.Integration.rsIDs_to_genes(options.rsID, options.tissues)
 	elif options.coords is not None:
@@ -109,6 +111,7 @@ def main():
 		if options.output is None:
 			output = sys.stdout
 		else:
+			logger.info("Preparing to write results to file %s" % options.output)
 			output = open(options.output, "w")
 
 		if options.json_output:
@@ -118,7 +121,9 @@ def main():
 		else:
 			formatted_results = pretty_snp_output(res)
 
+		logger.info("Writing results.")
 		output.write(formatted_results + "\n")
+		logger.info("Done writing results.")
 	else:
 		db_output(options.db, res)
 
