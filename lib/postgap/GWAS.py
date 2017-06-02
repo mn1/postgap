@@ -343,7 +343,11 @@ class Phewas_Catalog(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 				reported_trait = items[2],
 				source = self.display_name,
+<<<<<<< HEAD
 				study = None,
+=======
+				study = "None"
+>>>>>>> Added beta and odds ratio
 				odds_ratio = None,
 				beta_coefficient = None,
 				beta_coefficient_unit = None,

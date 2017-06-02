@@ -61,6 +61,7 @@ GWAS_SNP = collections.namedtuple(
 		'beta_coefficient_direction'
    ]
 )
+
 GWAS_Cluster = collections.namedtuple(
 	'GWAS_Cluster', 
 	[
