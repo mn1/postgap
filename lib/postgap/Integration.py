@@ -92,21 +92,21 @@ def scan_disease_databases(diseases, efos):
 
 	logger.info("Searching for GWAS SNPs associated to diseases (%s) or EFO IDs (%s) in all databases" % (", ".join(diseases), ", ".join(efos)))
 
-	hits = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
+	gwas_associations = concatenate(source().run(diseases, efos) for source in postgap.GWAS.sources)
 	
-	logger.info("Done searching for GWAS SNPs. Found %s hits." % len(hits) )
+	logger.info("Done searching for GWAS SNPs. Found %s gwas associations." % len(gwas_associations) )
 
 	associations_by_snp = dict()
-	for hit in hits:
+	for gwas_association in gwas_associations:
 		# Sanity filter to avoid breaking downstream code
 		# Looking at you GWAS DB, "p-value = 0", pshaw!
-		if hit.pvalue <= 0:
+		if gwas_association.pvalue <= 0:
 			continue
-		if hit.snp in associations_by_snp:
-			record = associations_by_snp[hit.snp]
-			record.evidence.append(hit)
-			if record.pvalue > hit.pvalue:
-				associations_by_snp[hit.snp] = GWAS_SNP(
+		if gwas_association.snp in associations_by_snp:
+			record = associations_by_snp[gwas_association.snp]
+			record.evidence.append(gwas_association)
+			if record.pvalue > gwas_association.pvalue:
+				associations_by_snp[gwas_association.snp] = GWAS_SNP(
 					snp = record.snp,
 					pvalue = gwas_association.pvalue,
 
