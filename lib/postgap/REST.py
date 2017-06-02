@@ -36,6 +36,67 @@ import httplib
 
 from postgap.Globals import *
 
+import signal
+
+class timeout_handler:
+	
+	url = 'initme'
+	#logger = logging.getLogger(__name__)
+	
+	# Register an handler for the timeout
+	def handler_very_short(self, signum, frame):
+		logging.info("Url is being a bit sluggish " + self.url)
+		signal.signal(signal.SIGALRM, self.handler_long)
+		# Set second timeout
+		signal.alarm(4)
+
+	# Register an handler for the timeout
+	def handler_short(self, signum, frame):
+		logging.warning("Waiting for " + self.url)
+		signal.signal(signal.SIGALRM, self.handler_long)
+		# Set second timeout
+		signal.alarm(10)
+
+	def handler_long(self, signum, frame):
+		logging.error("Killing request for url: "  + self.url)
+		raise requests.exceptions.ReadTimeout("Killed request for url because of timeout: %s" % self.url)
+
+def post_request_with_timeout(url, headers, data, timeout):
+	
+	th = timeout_handler()
+	th.url = url
+	
+	# Register the signal function handler
+	signal.signal(signal.SIGALRM, th.handler_short)
+
+	# Set first timeout
+	signal.alarm(1)
+	
+	r = requests.post(url, headers = headers, data = data, timeout=timeout)
+	
+	# Cancel alarm
+	signal.alarm(0)
+
+	return r
+
+def get_request_with_timeout(url, headers, timeout):
+	
+	th = timeout_handler()
+	th.url = url
+	
+	# Register the signal function handler
+	signal.signal(signal.SIGALRM, th.handler_short)
+
+	# Set first timeout
+	signal.alarm(2)
+	
+	r = requests.get(url, headers = headers, timeout=timeout)
+	
+	# Cancel alarm
+	signal.alarm(0)
+
+	return r
+
 def get(server, ext, data=None):
 	"""
 		Args:
@@ -55,10 +116,12 @@ def get(server, ext, data=None):
 		try:
 			if data is None:
 				headers = { "Content-Type" : "application/json" }
-				r = requests.get(str(server)+str(ext), headers = headers, timeout=200)
+				#r = requests.get(str(server)+str(ext), headers = headers, timeout=200)
+				r = get_request_with_timeout(str(server)+str(ext), headers = headers, timeout=200)
 			else:
 				headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-				r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
+				#r = requests.post(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
+				r = post_request_with_timeout(str(server)+str(ext), headers = headers, data = json.dumps(data), timeout=200)
                 except requests.exceptions.ReadTimeout:
 			continue
 		except requests.exceptions.ConnectionError:
