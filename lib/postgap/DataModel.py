@@ -34,8 +34,33 @@ Region = collections.namedtuple("Region", ['chrom', 'start', 'end'])
 SNP = collections.namedtuple("SNP", ['rsID', 'chrom', 'pos'])
 Gene = collections.namedtuple("Gene", ['name', 'id', 'chrom', 'tss', 'biotype'])
 Disease = collections.namedtuple('Disease', ['name', 'efo'])
-GWAS_Association = collections.namedtuple('GWAS_Association', ['snp','disease','reported_trait','pvalue','source','study'])
-GWAS_SNP = collections.namedtuple('GWAS_SNP', ['snp','pvalue', 'evidence'])
+GWAS_Association = collections.namedtuple(
+	'GWAS_Association', 
+	[
+		'snp',
+		'disease',
+		'reported_trait',
+		'pvalue',
+		'source',
+		'study',
+		'odds_ratio',
+		'beta_coefficient',
+		'beta_coefficient_unit',
+		'beta_coefficient_direction'
+	]
+)
+GWAS_SNP = collections.namedtuple(
+	'GWAS_SNP', 
+	[
+		'snp',
+		'pvalue',
+		'evidence',
+		'odds_ratio',
+		'beta_coefficient',
+		'beta_coefficient_unit',
+		'beta_coefficient_direction'
+   ]
+)
 GWAS_Cluster = collections.namedtuple('GWAS_Cluster', ['gwas_snps','ld_snps'])
 Cisregulatory_Evidence = collections.namedtuple('Cisregulatory_Evidence', ['snp','gene','score','source','study','tissue','info'])
 Regulatory_Evidence = collections.namedtuple('Regulatory_Evidence', ['snp','score','source','study','tissue'])

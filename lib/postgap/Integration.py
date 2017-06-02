@@ -108,14 +108,26 @@ def scan_disease_databases(diseases, efos):
 			if record.pvalue > hit.pvalue:
 				associations_by_snp[hit.snp] = GWAS_SNP(
 					snp = record.snp,
-					pvalue = hit.pvalue,
-					evidence = record.evidence
+					pvalue = gwas_association.pvalue,
+
+					odds_ratio                 = gwas_association.odds_ratio,
+					beta_coefficient           = gwas_association.beta_coefficient,
+					beta_coefficient_unit      = gwas_association.beta_coefficient_unit,
+					beta_coefficient_direction = gwas_association.beta_coefficient_direction,
+
+					evidence = record.evidence,
 				)
 		else:
-			associations_by_snp[hit.snp] = GWAS_SNP(
-				snp = hit.snp,
-				pvalue = hit.pvalue,
-				evidence = [ hit ]
+			associations_by_snp[gwas_association.snp] = GWAS_SNP(
+				snp = gwas_association.snp,
+				pvalue = gwas_association.pvalue,
+
+				odds_ratio                 = gwas_association.odds_ratio,
+				beta_coefficient           = gwas_association.beta_coefficient,
+				beta_coefficient_unit      = gwas_association.beta_coefficient_unit,
+				beta_coefficient_direction = gwas_association.beta_coefficient_direction,
+
+				evidence = [ gwas_association ]
 			)
 
 	res = associations_by_snp.values()
@@ -216,7 +228,13 @@ def get_gwas_snp_locations(gwas_snps):
 		GWAS_SNP(
 			snp = mapped_snp,
 			pvalue = original_gwas_snp[mapped_snp.rsID].pvalue,
-			evidence = original_gwas_snp[mapped_snp.rsID].evidence
+			evidence = original_gwas_snp[mapped_snp.rsID].evidence,
+
+			odds_ratio                 = original_gwas_snp[mapped_snp.rsID].odds_ratio,
+			beta_coefficient           = original_gwas_snp[mapped_snp.rsID].beta_coefficient,
+			beta_coefficient_unit      = original_gwas_snp[mapped_snp.rsID].beta_coefficient_unit,
+			beta_coefficient_direction = original_gwas_snp[mapped_snp.rsID].beta_coefficient_direction,
+
 		)
 		for mapped_snp in mapped_snps
 		if mapped_snp.rsID in original_gwas_snp
