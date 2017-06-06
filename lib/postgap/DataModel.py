@@ -61,7 +61,13 @@ GWAS_SNP = collections.namedtuple(
 		'beta_coefficient_direction'
    ]
 )
-GWAS_Cluster = collections.namedtuple('GWAS_Cluster', ['gwas_snps','ld_snps'])
+GWAS_Cluster = collections.namedtuple(
+	'GWAS_Cluster', 
+	[
+		'gwas_snps',
+		'ld_snps'
+	]
+)
 Cisregulatory_Evidence = collections.namedtuple('Cisregulatory_Evidence', ['snp','gene','score','source','study','tissue','info'])
 Regulatory_Evidence = collections.namedtuple('Regulatory_Evidence', ['snp','score','source','study','tissue'])
 GeneSNP_Association = collections.namedtuple('GeneSNP_Association', ['gene', 'snp', 'score', 'rank', 'intermediary_scores', 'cisregulatory_evidence', 'regulatory_evidence'])
