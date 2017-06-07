@@ -257,8 +257,17 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 		r2_array[snp_1_rank][snp_2_rank] = float(column[ column_with_linkage_disequilibrium ])
 		r2_array[snp_2_rank][snp_1_rank] = float(column[ column_with_linkage_disequilibrium ])
 
+	set_diagonal(r2_array)
+	
 	### Clean up
 	os.remove(rsID_file_name)
 	os.close(rsID_file)
 
 	return SNP_ids, r2_array
+
+def set_diagonal(matrix, value=1):
+	
+	matrix_length = len(matrix[0])
+	
+	for x in range(matrix_length):
+		matrix[x][x] = value
