@@ -191,6 +191,11 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 	start = min(positions) - 10
 	end = max(positions) + 10
 
+	if len(ld_snps) == 1:
+		SNP_ids  = [ ld_snps[0].rsID ]
+		r2_array = numpy.zeros((1, 1))
+		return SNP_ids, r2_array
+
 	### Find the relevant BCF file
 	chrom_file = os.path.join(postgap.Globals.DATABASES_DIR, '1000Genomes', population, 'ALL.chr%s.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.bcf' % (chrom))
 	if not os.path.isfile(chrom_file):
@@ -267,7 +272,7 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 
 def set_diagonal(matrix, value=1):
 	
-	matrix_length = len(matrix[0])
+	matrix_length = len(matrix)
 	
 	for x in range(matrix_length):
 		matrix[x][x] = value
