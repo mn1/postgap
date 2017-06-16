@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 """
 
@@ -27,14 +27,16 @@ limitations under the License.
 	<http://www.ensembl.org/Help/Contact>.
 
 """
-from postgap.DataModel import Region
 
-DATABASES_DIR = None
-SPECIES = None
-DEBUG = True
+def compute_gwas_clusters_with_finemap_posteriors(gwas_clusters):
+	
+	from methods.GWAS_Cluster import GWAS_Clusters_ok
+	assert(GWAS_Clusters_ok(gwas_clusters))
+	
+	from methods.GWAS_Cluster import compute_gwas_cluster_with_finemap_posteriors	
+	gwas_clusters_with_posteriors = [ 
+		compute_gwas_cluster_with_finemap_posteriors(gwas_cluster) 
+			for gwas_cluster in gwas_clusters 
+	]
+	return gwas_clusters_with_posteriors
 
-BLACKLISTED_REGIONS = [
-	Region(chrom = '6', start=28477797, end=33448354) # MHC
-]
-
-efo_accession = "notset"

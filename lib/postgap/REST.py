@@ -55,7 +55,7 @@ class timeout_handler:
 		logging.warning("Waiting for " + self.url)
 		signal.signal(signal.SIGALRM, self.handler_long)
 		# Set second timeout
-		signal.alarm(10)
+		signal.alarm(30)
 
 	def handler_long(self, signum, frame):
 		logging.error("Killing request for url: "  + self.url)
@@ -108,7 +108,9 @@ def get(server, ext, data=None):
 	#logger = logging.getLogger(__name__)
 	logger = logging.getLogger(__file__)
 	
-	for retries in range(3):
+	maximum_retries = 10
+	
+	for retries in range(maximum_retries):
 		if DEBUG:
 			logging.debug("REST JSON Query: %s%s" % (server, ext))
 			start_time = time.time()
@@ -130,19 +132,33 @@ def get(server, ext, data=None):
 
 		if not r.ok:
 			
-			http_response_code = httplib.responses[r.status_code]
+			http_response_code = None
 			
-			if (http_response_code == ""):
+			try:
+				http_response_code = httplib.responses[r.status_code]
+			except KeyError, k:
+				http_response_code = r.status_code
 				error_message = "Unknown status code %s" % (r.status_code)
 				logging.critical(error_message)
-				raise RuntimeError(error_message)
+			
+			#if (http_response_code == ""):
+				#error_message = "Unknown status code %s" % (r.status_code)
+				#logging.critical(error_message)
+				#raise RuntimeError(error_message)
 			
 			logging.error("Failed to get proper response to query %s%s" % (server, ext) )
 			logging.error("With headers:" + repr(headers))
 			if data is not None:
 				logging.error("With data:" + repr(data))
 			
-			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, json.dumps(r.json()) ) )
+			response_as_string = None
+			
+			try:
+				response_as_string = json.dumps(r.json())
+			except ValueError, v:
+				response_as_string = "<Error when stringifying>" + str(v) + "</Error when stringifying>"
+			
+			logging.error("Error code: %s (%s) %s" % (http_response_code, r.status_code, response_as_string ) )
 
 			if retries == 2:
 				logging.critical("Giving up.")
