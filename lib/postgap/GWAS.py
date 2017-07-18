@@ -82,17 +82,61 @@ class GWASCatalog(GWAS_source):
 	def query(self, efo):
 		logger = logging.getLogger(__name__)
 		logger.info("Querying GWAS catalog for " + efo);
-
+		
+		# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/search/findByUri?uri=http://www.ebi.ac.uk/efo/EFO_0000400
+		#
+		# EFO_0000400 stands for diabetes mellitus
+		#
 		server = 'http://wwwdev.ebi.ac.uk'
 		url = '/gwas/beta/rest/api/efoTraits/search/findByUri?uri=%s' % (efo)
-		
-		#print "Querying: " + server + url;
 
+		import postgap.REST
 		hash = postgap.REST.get(server, url)
+
+		'''
+			hash looks like this:
+			
+			{
+				"_embedded": {
+					"efoTraits": [
+						{
+							"trait": "diabetes mellitus",
+							"uri": "http://www.ebi.ac.uk/efo/EFO_0000400",
+							"_links": {
+								"self": {
+									"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71"
+								},
+								"efoTrait": {
+									"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71"
+								},
+								"studies": {
+									"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71/studies"
+								},
+								"associations": {
+									"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71/associations"
+								}
+							}
+						}
+					]
+				},
+				"_links": {
+					"self": {
+						"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/search/findByUri?uri=http://www.ebi.ac.uk/efo/EFO_0000400"
+					}
+				},
+				"page": {
+					"size": 20,
+					"totalElements": 1,
+					"totalPages": 1,
+					"number": 0
+				}
+			}
+		'''
+
 		list_of_GWAS_Associations = []
 
 		efoTraits = hash["_embedded"]["efoTraits"]
-
+		
 		for efoTraitHash in efoTraits:
 
 			efoTraitLinks = efoTraitHash["_links"]
@@ -103,16 +147,71 @@ class GWASCatalog(GWAS_source):
 			association_rest_response = efoTraitLinks["associations"]
 			association_url = association_rest_response["href"]
 			try:
+				# e.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/efoTraits/71/associations
+				#
 				association_response = postgap.REST.get(association_url, "")
 			except:
 				continue
+			
 			associations = association_response["_embedded"]["associations"]
+			
+			'''
+				associations has this structure:
+				
+				[
 
+					{
+						"riskFrequency": "NR",
+						"pvalueDescription": null,
+						"pvalueMantissa": 2,
+						"pvalueExponent": -8,
+						"multiSnpHaplotype": false,
+						"snpInteraction": false,
+						"snpType": "known",
+						"standardError": 0.0048,
+						"range": "[NR]",
+						"description": null,
+						"orPerCopyNum": null,
+						"betaNum": 0.0266,
+						"betaUnit": "unit",
+						"betaDirection": "increase",
+						"lastMappingDate": "2016-12-24T07:36:49.000+0000",
+						"lastUpdateDate": "2016-11-25T14:37:53.000+0000",
+						"pvalue": 2.0E-8,
+						"_links": {
+							"self": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018"
+							},
+							"association": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018"
+							},
+							"study": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/study"
+							},
+							"snps": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/snps"
+							},
+							"loci": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/loci"
+							},
+							"efoTraits": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/efoTraits"
+							},
+							"genes": {
+								"href": "http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/genes"
+							}
+						}
+					},
+				...
+				]
+			'''
 			logger.info("Received " + str(len(associations)) + " associations with SNPs.")
 			logger.info("Fetching SNPs and pvalues.")
 
 			for current_association in associations:
 
+				# e.g. snp_url can be: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/associations/16513018/snps
+				#
 				snp_url = current_association["_links"]["snps"]["href"]
 				snp_response = postgap.REST.get(snp_url, "")
 				singleNucleotidePolymorphisms = snp_response["_embedded"]["singleNucleotidePolymorphisms"]
@@ -134,6 +233,39 @@ class GWASCatalog(GWAS_source):
 						continue
 
 					logger.debug("    received association with snp rsId: " + '{:12}'.format(current_snp["rsId"]) + " with a pvalue of " + str(current_association["pvalue"]))
+					
+					risk_alleles_href = current_snp["_links"]["riskAlleles"]["href"]
+					import postgap.REST
+					hash = postgap.REST.get(risk_alleles_href, ext="")
+					riskAlleles = hash["_embedded"]["riskAlleles"]
+					
+					from methods.GWAS_Lead_Snp_Orientation                 \
+					import                                                 \
+					gwas_risk_alleles_present_in_reference,                \
+					none_of_the_risk_alleles_is_a_substitution_exception,  \
+					variant_mapping_is_ambiguous_exception,                \
+					some_alleles_present_others_not_exception
+					
+					try:
+					
+						if gwas_risk_alleles_present_in_reference(riskAlleles):
+							risk_alleles_present_in_reference = True
+							logging.info("Risk allele is present in reference");
+						else:
+							risk_alleles_present_in_reference = False
+							logging.info("Risk allele is not present in reference");
+					
+					except none_of_the_risk_alleles_is_a_substitution_exception as e:
+						logger.info(str(e))
+						continue
+					
+					except variant_mapping_is_ambiguous_exception:
+						logger.info("The variant mapping is ambiguous.")
+						continue
+					
+					except some_alleles_present_others_not_exception as e:
+						logger.info(str(e));
+						continue
 
 					list_of_GWAS_Associations.append(
 						GWAS_Association(
@@ -146,6 +278,11 @@ class GWASCatalog(GWAS_source):
 							pvalue  = current_association["pvalue"],
 							source  = 'GWAS Catalog',
 							study   = 'PMID' + pubmedId,
+							
+							# For fetching additional information like risk allele later, if needed.
+							# E.g.: http://wwwdev.ebi.ac.uk/gwas/beta/rest/api/singleNucleotidePolymorphisms/9765
+							rest_hash = current_snp,
+							risk_alleles_present_in_reference = risk_alleles_present_in_reference,
 							
 							odds_ratio                 = current_association["orPerCopyNum"],
 
@@ -269,7 +406,9 @@ class GRASP(GWAS_source):
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 					reported_trait = items[12].decode('latin1'),
 					source = self.display_name,
-					study = items[7]
+					study = items[7],
+					rest_hash = None,
+					risk_alleles_present_in_reference = None,
 				)
 
 		if items[12] in diseases:
@@ -280,7 +419,9 @@ class GRASP(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 				reported_trait = items[12].decode('latin1'),
 				source = self.display_name,
-				study = items[7]
+				study = items[7],
+				rest_hash = None,
+				risk_alleles_present_in_reference = None,
 			)
 
 		return None
@@ -332,7 +473,8 @@ class Phewas_Catalog(GWAS_source):
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri), 
 					reported_trait = items[2],
 					source = self.display_name,
-					study = "None"
+					study = "None",
+					rest_hash = None
 				)
 
 		if items[2] in diseases: 
@@ -348,6 +490,7 @@ class Phewas_Catalog(GWAS_source):
 				beta_coefficient = None,
 				beta_coefficient_unit = None,
 				beta_coefficient_direction = None,
+				rest_hash = None
 			)
 
 		return None
@@ -397,7 +540,9 @@ class GWAS_DB(GWAS_source):
 					disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 					reported_trait = items[5].decode('latin1'),
 					source = self.display_name,
-					study = items[4]
+					study = items[4],
+					rest_hash = None,
+					risk_alleles_present_in_reference = None,
 				)
 
 		if items[5] in diseases:
@@ -408,7 +553,9 @@ class GWAS_DB(GWAS_source):
 				disease = Disease(name = postgap.EFO.term(iri), efo = iri),
 				reported_trait = items[5].decode('latin1'),
 				source = self.display_name,
-				study = items[4]
+				study = items[4],
+				rest_hash = None,
+				risk_alleles_present_in_reference = None,
 			)
 
 		return None
