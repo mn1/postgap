@@ -37,4 +37,9 @@ BLACKLISTED_REGIONS = [
 	Region(chrom = '6', start=28477797, end=33448354) # MHC
 ]
 
+# These get set in POSTGAP.py
+
 work_directory = "notset"
+
+finemap_gwas_clusters_directory = None
+finemap_eqtl_clusters_directory = None
