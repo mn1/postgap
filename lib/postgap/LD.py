@@ -254,7 +254,11 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 	### Second pass through file: store LD into matrix
 	SNP_ids = [x.rsID for x in ld_snps if x.rsID in observed_snps]
 	snp_order = dict((rsID, rank) for rank, rsID in enumerate(SNP_ids))
-	r2_array = numpy.zeros((len(SNP_ids), len(SNP_ids)))
+	
+	matrix_size = len(SNP_ids)
+	
+	r2_array = numpy.zeros((matrix_size, matrix_size))
+	
 	for line in output.split("\n"):
 		column = line.split('\t')
 		
@@ -271,11 +275,38 @@ def get_pairwise_ld(ld_snps, population='EUR'):
 
 	set_diagonal(r2_array)
 	
+	# Healthcheck for the matrix. An LD matrix should never be the unity 
+	# matrix, but sometimes it is.
+	if is_unity_matrix(matrix = r2_array, matrix_size=matrix_size):
+		raise Exception("LD matrix is unity matrix!")
+		
 	### Clean up
 	os.remove(rsID_file_name)
 	os.close(rsID_file)
 
 	return SNP_ids, r2_array
+
+def is_unity_matrix(matrix, matrix_size):
+	"""
+		Checks, if the matrix passed in is the unity matrix
+	"""
+	is_unity_matrix = True
+	for i in range(0, matrix_size):
+		for j in range(0, matrix_size):
+			
+			expected_value = 0
+			if i==j:
+				expected_value = 1
+			
+			is_unity_matrix = is_unity_matrix and (matrix[i][j] == expected_value)
+			
+			if not(is_unity_matrix):
+				break
+		
+		if not(is_unity_matrix):
+			break
+	
+	return is_unity_matrix
 
 def set_diagonal(matrix, value=1):
 	
