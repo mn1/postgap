@@ -107,6 +107,17 @@ def main():
 			options.tissues = ["Whole_Blood"]
 		res = postgap.Integration.ld_snps_to_genes([snp], options.tissues)
 
+
+	found_associations_file = postgap.Globals.work_directory + "/" + "snps_to_genes_associations.pickle"
+	
+	logger.info("Writing associations to " + found_associations_file)
+	
+	f = open(found_associations_file, 'w')
+	
+	import pickle
+	pickle.dump(res, f)
+	f.close
+
 	if options.db is None:
 		if options.output is None:
 			output = sys.stdout
