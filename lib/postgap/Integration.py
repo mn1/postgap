@@ -240,12 +240,8 @@ def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_c
 	list_of_files_created = []
 	
 	for cluster in clusters:
-
-		cluster_file_name = create_file_name_for_gwas_cluster(cluster, directory_name_for_storing_the_gwas_clusters)
 		
-		import os.path
-		if os.path.isfile(cluster_file_name):
-			raise Exception("File " + cluster_file_name + " already exists!")
+		cluster_file_name = create_unique_file_name_for_gwas_cluster(cluster, directory_name_for_storing_the_gwas_clusters)
 
 		f = open(cluster_file_name, 'w')
 		
@@ -256,11 +252,35 @@ def write_gwas_clusters_to_files(clusters, directory_name_for_storing_the_gwas_c
 		list_of_files_created.append(cluster_file_name)
 	
 	return list_of_files_created
+
+def create_unique_file_name_for_gwas_cluster(gwas_cluster, base_directory):
 	
-def create_file_name_for_gwas_cluster(gwas_cluster, base_directory):
+	successfully_created_unique_file_name = False
+	suffix_to_make_file_unique = ""
+	cluster_file_name = None
+	number_of_file_with_identical_name = 0
+	
+	while not (successfully_created_unique_file_name):
+		
+		if number_of_file_with_identical_name > 0:
+			suffix_to_make_file_unique = "." + str(number_of_file_with_identical_name)
+		
+		cluster_file_name = create_file_name_for_gwas_cluster(gwas_cluster, base_directory, suffix_to_make_file_unique)
+		
+		import os.path
+		if os.path.isfile(cluster_file_name):
+			logger = logging.getLogger(__name__)
+			logger.warning("File " + cluster_file_name + " already exists!")
+			number_of_file_with_identical_name += 1
+		else:
+			successfully_created_unique_file_name = True
+		
+	return cluster_file_name
+
+def create_file_name_for_gwas_cluster(gwas_cluster, base_directory, suffix_to_make_file_unique):
 	
 	production_name = create_production_name_for_gwas_cluster(gwas_cluster)
-	cluster_file_name = base_directory + "/" +  production_name + ".pickle"
+	cluster_file_name = base_directory + "/" +  production_name + suffix_to_make_file_unique + ".pickle"
 	
 	return cluster_file_name
 
