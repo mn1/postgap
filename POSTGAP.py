@@ -308,10 +308,10 @@ def genecluster_association_table(association):
 		else:
 			vep_mean = 0
 
-		gwas_sources = [gwas_association.source for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_snps = [gwas_association.snp.rsID for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_pvalues = [gwas_association.pvalue for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
-		gwas_studies = [gwas_association.study for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_sources         = [gwas_association.source         for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_snps            = [gwas_association.snp.rsID       for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_pvalues         = [gwas_association.pvalue         for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
+		gwas_studies         = [gwas_association.study          for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 		gwas_reported_traits = [gwas_association.reported_trait for gwas_snp in association.cluster.gwas_snps for gwas_association in gwas_snp.evidence]
 
 		row = [
